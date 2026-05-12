@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Hebrew:wght@300;400;500;600;700;800&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+html {
+  direction: rtl;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Noto Sans Hebrew', sans-serif;
+  background-color: #f5f0e8;
+  color: #1e293b;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar       { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f5f0e8; }
+::-webkit-scrollbar-thumb { background: #d0b896; border-radius: 99px; }
+::-webkit-scrollbar-thumb:hover { background: #c4a882; }
+
+/* Smooth progress bar fill */
+@keyframes progressFill {
+  from { width: 0% }
+  to   { width: var(--target-width, 0%) }
+}
+
+/* Remove number input spinners */
+input[type='number']::-webkit-inner-spin-button,
+input[type='number']::-webkit-outer-spin-button { -webkit-appearance: none; }
+
+/* Ensure iframes fill their containers */
+iframe { border: 0; display: block; }
