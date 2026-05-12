@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(vercel --prod --yes)",
+      "Bash(vercel --prod --yes --scope niri8899-7922s-projects)",
+      "Bash(git add *)",
+      "Bash(git -c user.email=niri8899@users.noreply.github.com -c user.name=niri8899-beep commit -m \"Disable eslint during build\")",
+      "Bash(git push *)"
+    ]
+  }
+}
