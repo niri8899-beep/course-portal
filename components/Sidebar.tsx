@@ -13,6 +13,7 @@ const navItems = [
   { href: '/dashboard', label: 'דף הבית',   icon: '🏠' },
   { href: '/modules',   label: 'מודולים',    icon: '📚' },
   { href: '/progress',  label: 'התקדמות',   icon: '📊' },
+  { href: '/closing',   label: 'סרטון סיום', icon: '🎉' },
 ]
 
 export default function Sidebar({ userEmail, onLogout, isOpen, onClose }: Props) {

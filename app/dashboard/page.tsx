@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
 import { getCurrentUser } from '@/lib/auth'
 import { overallPercent, getCompletedSet } from '@/lib/progress'
-import { courseData, TOTAL_LESSONS } from '@/lib/courseData'
+import { courseData, TOTAL_LESSONS, introVideo } from '@/lib/courseData'
 
 export default function DashboardPage() {
   const router = useRouter()
@@ -62,6 +62,24 @@ export default function DashboardPage() {
               התחלת למידה
               <span className="text-base">←</span>
             </button>
+          </div>
+        </div>
+
+        {/* Intro video */}
+        <div className={`${ready ? shown : hidden} delay-100`}>
+          <h2 className="font-semibold text-slate-800 mb-4">{introVideo.title}</h2>
+          <div className="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl">
+            <div className="relative" style={{ paddingTop: '56.25%' }}>
+              <iframe
+                src={`https://player.vimeo.com/video/${introVideo.vimeoId}${
+                  introVideo.vimeoHash ? `?h=${introVideo.vimeoHash}&` : '?'
+                }title=0&byline=0&portrait=0`}
+                className="absolute inset-0 w-full h-full"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title={introVideo.title}
+              />
+            </div>
           </div>
         </div>
 

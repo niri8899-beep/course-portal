@@ -121,7 +121,6 @@ export default function ModulePage() {
                       )}
                     </div>
                     <p className="font-medium text-slate-800 text-sm leading-snug">{lesson.title}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">⏱ {lesson.duration}</p>
                   </div>
 
                   {/* Arrow */}

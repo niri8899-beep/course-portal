@@ -6,9 +6,6 @@ import { getCurrentUser } from '@/lib/auth'
 import { isComplete, markComplete } from '@/lib/progress'
 import { courseData } from '@/lib/courseData'
 
-// Public Vimeo sample videos used as placeholders
-const VIMEO_IDS = ['76979871', '148751763', '168670449', '217499569', '287093939']
-
 export default function LessonPage() {
   const { moduleId: mIdStr, lessonId: lIdStr } = useParams<{ moduleId: string; lessonId: string }>()
   const router    = useRouter()
@@ -39,8 +36,7 @@ export default function LessonPage() {
   }
 
   function handleDownloadPDF() {
-    // Placeholder — replace with real download URL
-    alert(`הורדת קובץ PDF:\n${lesson?.title}`)
+    if (lesson?.pdf) window.open(lesson.pdf, '_blank')
   }
 
   if (!module || !lesson) {
@@ -56,7 +52,6 @@ export default function LessonPage() {
     )
   }
 
-  const vimeoId   = VIMEO_IDS[(lId - 1) % VIMEO_IDS.length]
   const prevLesson = module.lessons.find(l => l.id === lId - 1)
   const nextLesson = module.lessons.find(l => l.id === lId + 1)
   const nextMod    = courseData.modules.find(m => m.id === mId + 1)
@@ -94,20 +89,29 @@ export default function LessonPage() {
             )}
           </div>
           <h1 className="text-xl sm:text-2xl font-bold text-slate-800 leading-snug">{lesson.title}</h1>
-          <p className="text-sm text-slate-400 mt-1.5">⏱ {lesson.duration} · 📚 {module.title}</p>
+          <p className="text-sm text-slate-400 mt-1.5">📚 {module.title}</p>
         </div>
 
         {/* Video player */}
         <div className={`bg-slate-900 rounded-3xl overflow-hidden shadow-2xl
                          transition-all duration-500 delay-100 ${ready ? shown : hidden}`}>
           <div className="relative" style={{ paddingTop: '56.25%' }}>
-            <iframe
-              src={`https://player.vimeo.com/video/${vimeoId}?title=0&byline=0&portrait=0&color=2563eb`}
-              className="absolute inset-0 w-full h-full"
-              allow="autoplay; fullscreen; picture-in-picture"
-              allowFullScreen
-              title={lesson.title}
-            />
+            {lesson.vimeoId ? (
+              <iframe
+                src={`https://player.vimeo.com/video/${lesson.vimeoId}${
+                  lesson.vimeoHash ? `?h=${lesson.vimeoHash}&` : '?'
+                }title=0&byline=0&portrait=0&color=2563eb`}
+                className="absolute inset-0 w-full h-full"
+                allow="autoplay; fullscreen; picture-in-picture"
+                allowFullScreen
+                title={lesson.title}
+              />
+            ) : (
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 gap-2">
+                <span className="text-3xl">🎬</span>
+                <span className="text-sm">השיעור יעלה בקרוב</span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -129,16 +133,18 @@ export default function LessonPage() {
             <span>{done ? 'השיעור הושלם!' : 'סמן כהושלם'}</span>
           </button>
 
-          <button
-            onClick={handleDownloadPDF}
-            className="flex-1 sm:flex-none py-3 px-6 rounded-xl font-semibold text-sm
-                       bg-white border border-beige-300 text-slate-700 shadow-sm
-                       hover:bg-beige-50 hover:shadow-md active:scale-95
-                       transition-all duration-200 flex items-center justify-center gap-2"
-          >
-            <span>📄</span>
-            <span>הורדת קובץ PDF</span>
-          </button>
+          {lesson.pdf && (
+            <button
+              onClick={handleDownloadPDF}
+              className="flex-1 sm:flex-none py-3 px-6 rounded-xl font-semibold text-sm
+                         bg-white border border-beige-300 text-slate-700 shadow-sm
+                         hover:bg-beige-50 hover:shadow-md active:scale-95
+                         transition-all duration-200 flex items-center justify-center gap-2"
+            >
+              <span>📄</span>
+              <span>הורדת קובץ PDF</span>
+            </button>
+          )}
         </div>
 
         {/* Lesson nav */}
@@ -183,12 +189,12 @@ export default function LessonPage() {
             </button>
           ) : (
             <button
-              onClick={() => router.push('/progress')}
+              onClick={() => router.push('/closing')}
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold
                          bg-amber-500 hover:bg-amber-600 active:scale-95 text-white
                          shadow-md hover:shadow-lg transition-all duration-200"
             >
-              🎉 ראה את ההתקדמות שלי
+              🎉 לסרטון הסיום
             </button>
           )}
         </div>
