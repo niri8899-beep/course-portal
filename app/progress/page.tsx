@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
 import { getCurrentUser } from '@/lib/auth'
-import { overallPercent, modulePercent, getCompletedSet, isComplete } from '@/lib/progress'
+import { overallPercent, modulePercent, fetchCompleted, isInSet } from '@/lib/progress'
 import { courseData, TOTAL_LESSONS } from '@/lib/courseData'
 
 export default function ProgressPage() {
@@ -12,17 +12,19 @@ export default function ProgressPage() {
   const [modPct, setModPct]     = useState<Record<number, number>>({})
   const [total, setTotal]       = useState(0)
   const [ready, setReady]       = useState(false)
-  const [user, setUser]         = useState<string | null>(null)
+  const [completedSet, setCompletedSet] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     const u = getCurrentUser()
-    setUser(u)
     if (u) {
-      setOverall(overallPercent(u))
-      setTotal(getCompletedSet(u).size)
-      const map: Record<number, number> = {}
-      courseData.modules.forEach(m => { map[m.id] = modulePercent(u, m.id, m.lessons.length) })
-      setModPct(map)
+      fetchCompleted(u).then(set => {
+        setCompletedSet(set)
+        setOverall(overallPercent(set))
+        setTotal(set.size)
+        const map: Record<number, number> = {}
+        courseData.modules.forEach(m => { map[m.id] = modulePercent(set, m.id, m.lessons.length) })
+        setModPct(map)
+      })
     }
     const t = setTimeout(() => setReady(true), 80)
     return () => clearTimeout(t)
@@ -113,7 +115,7 @@ export default function ProgressPage() {
                 {/* Lesson dots */}
                 <div className="flex gap-1.5 mb-3">
                   {m.lessons.map(lesson => {
-                    const lessonDone = user ? isComplete(user, m.id, lesson.id) : false
+                    const lessonDone = isInSet(completedSet, m.id, lesson.id)
                     return (
                       <button
                         key={lesson.id}

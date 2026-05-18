@@ -1,6 +1,8 @@
 'use client'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { fetchCompleted, overallPercent } from '@/lib/progress'
 
 interface Props {
   userEmail: string
@@ -13,11 +15,23 @@ const navItems = [
   { href: '/dashboard', label: 'דף הבית',   icon: '🏠' },
   { href: '/modules',   label: 'מודולים',    icon: '📚' },
   { href: '/progress',  label: 'התקדמות',   icon: '📊' },
-  { href: '/closing',   label: 'סרטון סיום', icon: '🎉' },
+  { href: '/profile',   label: 'הפרופיל שלי', icon: '👤' },
 ]
 
 export default function Sidebar({ userEmail, onLogout, isOpen, onClose }: Props) {
   const pathname = usePathname()
+  const [courseDone, setCourseDone] = useState(false)
+
+  useEffect(() => {
+    if (!userEmail) return
+    fetchCompleted(userEmail).then(set => {
+      setCourseDone(overallPercent(set) === 100)
+    })
+  }, [userEmail, pathname])
+
+  const items = courseDone
+    ? [...navItems, { href: '/closing', label: 'סרטון סיום', icon: '🎉' }]
+    : navItems
 
   return (
     <aside
@@ -46,7 +60,7 @@ export default function Sidebar({ userEmail, onLogout, isOpen, onClose }: Props)
 
       {/* Nav */}
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
-        {navItems.map(item => {
+        {items.map(item => {
           const active =
             pathname === item.href ||
             (item.href !== '/dashboard' && pathname.startsWith(item.href))

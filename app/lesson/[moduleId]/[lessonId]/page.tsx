@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
 import { getCurrentUser } from '@/lib/auth'
-import { isComplete, markComplete } from '@/lib/progress'
+import { isInSet, markComplete, fetchCompleted } from '@/lib/progress'
 import { courseData } from '@/lib/courseData'
 
 export default function LessonPage() {
@@ -22,7 +22,9 @@ export default function LessonPage() {
   useEffect(() => {
     const u = getCurrentUser()
     setUser(u)
-    if (u && module && lesson) setDone(isComplete(u, mId, lId))
+    if (u && module && lesson) {
+      fetchCompleted(u).then(set => setDone(isInSet(set, mId, lId)))
+    }
     const t = setTimeout(() => setReady(true), 80)
     return () => clearTimeout(t)
   }, [mId, lId, module, lesson])
@@ -189,7 +191,7 @@ export default function LessonPage() {
             </button>
           ) : (
             <button
-              onClick={() => router.push('/closing')}
+              onClick={() => router.push(`/module/${mId}`)}
               className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold
                          bg-amber-500 hover:bg-amber-600 active:scale-95 text-white
                          shadow-md hover:shadow-lg transition-all duration-200"

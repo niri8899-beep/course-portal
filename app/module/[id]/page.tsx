@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
 import { getCurrentUser } from '@/lib/auth'
-import { isComplete, modulePercent } from '@/lib/progress'
-import { courseData } from '@/lib/courseData'
+import { isInSet, modulePercent, fetchCompleted } from '@/lib/progress'
+import { courseData, outroVideo, contactLinks } from '@/lib/courseData'
 
 export default function ModulePage() {
   const { id }    = useParams<{ id: string }>()
@@ -19,10 +19,12 @@ export default function ModulePage() {
   useEffect(() => {
     const u = getCurrentUser()
     if (u && module) {
-      const map: Record<number, boolean> = {}
-      module.lessons.forEach(l => { map[l.id] = isComplete(u, moduleId, l.id) })
-      setDoneMap(map)
-      setPct(modulePercent(u, moduleId, module.lessons.length))
+      fetchCompleted(u).then(set => {
+        const map: Record<number, boolean> = {}
+        module.lessons.forEach(l => { map[l.id] = isInSet(set, moduleId, l.id) })
+        setDoneMap(map)
+        setPct(modulePercent(set, moduleId, module.lessons.length))
+      })
     }
     const t = setTimeout(() => setReady(true), 80)
     return () => clearTimeout(t)
@@ -134,6 +136,63 @@ export default function ModulePage() {
             )
           })}
         </div>
+
+        {/* Closing video — shown at the end of the last module */}
+        {moduleId === courseData.modules.length && (
+          <div className="space-y-3 pt-2">
+            <h2 className="font-semibold text-slate-800">סרטון סיום</h2>
+
+            <div className={`transition-all duration-500 ${ready ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
+              <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2.5 py-1 rounded-full">
+                🎉 סיום הקורס
+              </span>
+              <h3 className="text-lg font-bold text-slate-800 leading-snug mt-2">
+                {outroVideo.title}
+              </h3>
+              <p className="text-sm text-slate-400 mt-1.5">כל הכבוד שהגעת עד לכאן!</p>
+            </div>
+
+            <div className="bg-slate-900 rounded-3xl overflow-hidden shadow-2xl">
+              <div className="relative" style={{ paddingTop: '56.25%' }}>
+                <iframe
+                  src={`https://player.vimeo.com/video/${outroVideo.vimeoId}${
+                    outroVideo.vimeoHash ? `?h=${outroVideo.vimeoHash}&` : '?'
+                  }title=0&byline=0&portrait=0&color=2563eb`}
+                  className="absolute inset-0 w-full h-full"
+                  allow="autoplay; fullscreen; picture-in-picture"
+                  allowFullScreen
+                  title={outroVideo.title}
+                />
+              </div>
+            </div>
+
+            {contactLinks.length > 0 && (
+              <div className="bg-white rounded-3xl border border-beige-200 shadow-sm p-6">
+                <h3 className="font-semibold text-slate-800 mb-1">בואו נישאר בקשר</h3>
+                <p className="text-sm text-slate-500 mb-4">
+                  יש לכם שאלה? מוזמנים ליצור איתי קשר בכל אחת מהדרכים הבאות:
+                </p>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {contactLinks.map(link => (
+                    <a
+                      key={link.label}
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl
+                                 bg-beige-100 text-slate-700 font-medium text-sm
+                                 hover:bg-primary-50 hover:text-primary-700
+                                 active:scale-95 transition-all duration-200"
+                    >
+                      <span className="text-lg">{link.icon}</span>
+                      <span>{link.label}</span>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
       </div>
     </AppLayout>

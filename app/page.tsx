@@ -1,18 +1,17 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { login } from '@/lib/auth'
-import ChangePasswordModal from '@/components/ChangePasswordModal'
 
 export default function LoginPage() {
   const router = useRouter()
-  const [email, setEmail]                   = useState('')
-  const [password, setPassword]             = useState('')
-  const [error, setError]                   = useState('')
-  const [loading, setLoading]               = useState(false)
-  const [showPassword, setShowPassword]     = useState(false)
-  const [showModal, setShowModal]           = useState(false)
-  const [mounted, setMounted]               = useState(false)
+  const [email, setEmail]               = useState('')
+  const [password, setPassword]         = useState('')
+  const [error, setError]               = useState('')
+  const [loading, setLoading]           = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [mounted, setMounted]           = useState(false)
 
   useEffect(() => {
     setMounted(true)
@@ -26,22 +25,17 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
-    setLoading(true)
-    await new Promise(r => setTimeout(r, 350))
 
-    const result = login(email, password)
+    setLoading(true)
+    const result = await login(email, password)
     setLoading(false)
 
     if (!result.success) {
-      setError(result.error ?? 'שגיאה בהתחברות')
+      setError(result.error ?? 'שגיאה')
       return
     }
 
-    if (result.needsPasswordChange) {
-      setShowModal(true)
-    } else {
-      router.push('/dashboard')
-    }
+    router.push('/dashboard')
   }
 
   return (
@@ -66,7 +60,9 @@ export default function LoginPage() {
 
         {/* Card */}
         <div className="bg-white rounded-3xl shadow-xl border border-beige-200 p-8">
-          <h2 className="text-lg font-semibold text-slate-800 mb-6">התחברות לקורס</h2>
+          <h2 className="text-lg font-semibold text-slate-800 mb-6">
+            התחברות לקורס
+          </h2>
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {/* Email */}
@@ -111,6 +107,14 @@ export default function LoginPage() {
                   {showPassword ? '🙈' : '👁️'}
                 </button>
               </div>
+              <div className="text-left mt-1.5">
+                <Link
+                  href="/forgot-password"
+                  className="text-xs font-medium text-primary-600 hover:text-primary-700"
+                >
+                  שכחת סיסמה?
+                </Link>
+              </div>
             </div>
 
             {error && (
@@ -138,25 +142,18 @@ export default function LoginPage() {
           </form>
 
           <div className="mt-6 pt-5 border-t border-beige-100 text-center">
-            <p className="text-xs text-slate-400">
-              סיסמה ראשונית:{' '}
-              <span className="font-mono font-semibold text-slate-600 bg-beige-100 px-2 py-0.5 rounded-md">
-                12345
-              </span>
+            <p className="text-sm text-slate-500">
+              עדיין לא רכשת את הקורס?{' '}
+              <Link
+                href="/purchase"
+                className="font-semibold text-primary-600 hover:text-primary-700"
+              >
+                לרכישת הקורס
+              </Link>
             </p>
-            <p className="text-xs text-slate-400 mt-1">תתבקש לשנות אותה בכניסה הראשונה</p>
           </div>
         </div>
       </div>
-
-      {showModal && (
-        <ChangePasswordModal
-          onSuccess={() => {
-            setShowModal(false)
-            router.push('/dashboard')
-          }}
-        />
-      )}
     </div>
   )
 }

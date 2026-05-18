@@ -1,18 +1,51 @@
 'use client'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
+import { getCurrentUser } from '@/lib/auth'
+import { fetchCompleted, overallPercent } from '@/lib/progress'
 import { outroVideo, contactLinks } from '@/lib/courseData'
 
 export default function ClosingPage() {
+  const router = useRouter()
   const [ready, setReady] = useState(false)
+  const [allowed, setAllowed] = useState<boolean | null>(null)
 
   useEffect(() => {
+    const u = getCurrentUser()
+    if (!u) { router.replace('/'); return }
+    fetchCompleted(u).then(set => {
+      setAllowed(overallPercent(set) === 100)
+    })
     const t = setTimeout(() => setReady(true), 80)
     return () => clearTimeout(t)
-  }, [])
+  }, [router])
 
   const shown  = 'opacity-100 translate-y-0'
   const hidden = 'opacity-0 translate-y-4'
+
+  if (allowed === null) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center py-20">
+          <div className="w-8 h-8 border-[3px] border-primary-200 border-t-primary-600 rounded-full animate-spin" />
+        </div>
+      </AppLayout>
+    )
+  }
+
+  if (!allowed) {
+    return (
+      <AppLayout>
+        <div className="text-center py-20 text-slate-500">
+          <p>סרטון הסיום ייפתח לאחר השלמת כל הקורס.</p>
+          <button onClick={() => router.push('/modules')} className="mt-4 text-primary-600 hover:underline text-sm">
+            חזרה למודולים
+          </button>
+        </div>
+      </AppLayout>
+    )
+  }
 
   return (
     <AppLayout>

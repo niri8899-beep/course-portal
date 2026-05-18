@@ -1,36 +1,41 @@
 import { TOTAL_LESSONS } from './courseData'
 
-function key(email: string) {
-  return `cp_progress_${email.toLowerCase()}`
-}
-
-export function getCompletedSet(email: string): Set<string> {
-  if (typeof window === 'undefined') return new Set()
+export async function fetchCompleted(email: string): Promise<Set<string>> {
   try {
-    const arr = JSON.parse(localStorage.getItem(key(email)) ?? '[]') as string[]
-    return new Set(arr)
+    const res = await fetch(`/api/progress?email=${encodeURIComponent(email)}`)
+    if (!res.ok) return new Set()
+    const data = await res.json()
+    return new Set((data.completed ?? []) as string[])
   } catch {
     return new Set()
   }
 }
 
-export function markComplete(email: string, moduleId: number, lessonId: number) {
-  const set = getCompletedSet(email)
-  set.add(`${moduleId}_${lessonId}`)
-  localStorage.setItem(key(email), JSON.stringify(Array.from(set)))
+export async function markComplete(
+  email: string,
+  moduleId: number,
+  lessonId: number
+): Promise<void> {
+  try {
+    await fetch('/api/progress', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, moduleId, lessonId }),
+    })
+  } catch {
+    /* network error — caller already updated UI optimistically */
+  }
 }
 
-export function isComplete(email: string, moduleId: number, lessonId: number): boolean {
-  return getCompletedSet(email).has(`${moduleId}_${lessonId}`)
+export function isInSet(set: Set<string>, moduleId: number, lessonId: number): boolean {
+  return set.has(`${moduleId}_${lessonId}`)
 }
 
-export function overallPercent(email: string): number {
-  const size = getCompletedSet(email).size
-  return Math.round((size / TOTAL_LESSONS) * 100)
+export function overallPercent(set: Set<string>): number {
+  return Math.round((set.size / TOTAL_LESSONS) * 100)
 }
 
-export function modulePercent(email: string, moduleId: number, total: number): number {
-  const set = getCompletedSet(email)
+export function modulePercent(set: Set<string>, moduleId: number, total: number): number {
   let count = 0
   for (let i = 1; i <= total; i++) {
     if (set.has(`${moduleId}_${i}`)) count++

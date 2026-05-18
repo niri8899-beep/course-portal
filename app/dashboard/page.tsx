@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
 import { getCurrentUser } from '@/lib/auth'
-import { overallPercent, getCompletedSet } from '@/lib/progress'
+import { overallPercent, fetchCompleted } from '@/lib/progress'
 import { courseData, TOTAL_LESSONS, introVideo } from '@/lib/courseData'
 
 export default function DashboardPage() {
@@ -15,8 +15,10 @@ export default function DashboardPage() {
   useEffect(() => {
     const u = getCurrentUser()
     if (u) {
-      setProgress(overallPercent(u))
-      setCompleted(getCompletedSet(u).size)
+      fetchCompleted(u).then(set => {
+        setProgress(overallPercent(set))
+        setCompleted(set.size)
+      })
     }
     const t = setTimeout(() => setReady(true), 80)
     return () => clearTimeout(t)

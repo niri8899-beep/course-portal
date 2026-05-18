@@ -1,61 +1,94 @@
-const USERS_KEY = 'cp_users'
 const CURRENT_USER_KEY = 'cp_current_user'
-const DEFAULT_PASSWORD = '12345'
 
-interface StoredUser {
-  email: string
-  password: string
-  passwordChanged: boolean
-}
-
-function getUsers(): StoredUser[] {
-  if (typeof window === 'undefined') return []
-  try {
-    return JSON.parse(localStorage.getItem(USERS_KEY) ?? '[]') as StoredUser[]
-  } catch {
-    return []
-  }
-}
-
-function saveUsers(users: StoredUser[]) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users))
-}
-
-export function login(
+async function authRequest(
+  path: string,
   email: string,
   password: string
-): { success: boolean; needsPasswordChange: boolean; error?: string } {
-  const users = getUsers()
-  const existing = users.find(u => u.email.toLowerCase() === email.toLowerCase())
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch(path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const data = await res.json()
 
-  if (!existing) {
-    if (password !== DEFAULT_PASSWORD) {
-      return { success: false, needsPasswordChange: false, error: 'אימייל או סיסמה שגויים' }
+    if (!data.success) {
+      return { success: false, error: data.error ?? 'אירעה שגיאה' }
     }
-    users.push({ email, password: DEFAULT_PASSWORD, passwordChanged: false })
-    saveUsers(users)
-    localStorage.setItem(CURRENT_USER_KEY, email)
-    return { success: true, needsPasswordChange: true }
-  }
 
-  if (existing.password !== password) {
-    return { success: false, needsPasswordChange: false, error: 'אימייל או סיסמה שגויים' }
+    localStorage.setItem(CURRENT_USER_KEY, email.toLowerCase().trim())
+    return { success: true }
+  } catch {
+    return { success: false, error: 'שגיאת חיבור לשרת' }
   }
-
-  localStorage.setItem(CURRENT_USER_KEY, email)
-  return { success: true, needsPasswordChange: !existing.passwordChanged }
 }
 
-export function changePassword(newPassword: string): boolean {
-  const email = getCurrentUser()
-  if (!email) return false
-  const users = getUsers()
-  const user = users.find(u => u.email.toLowerCase() === email.toLowerCase())
-  if (!user) return false
-  user.password = newPassword
-  user.passwordChanged = true
-  saveUsers(users)
-  return true
+export function login(email: string, password: string) {
+  return authRequest('/api/login', email, password)
+}
+
+export function register(email: string, password: string) {
+  return authRequest('/api/register', email, password)
+}
+
+export async function requestPasswordReset(
+  email: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch('/api/forgot-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    const data = await res.json()
+    if (!data.success) {
+      return { success: false, error: data.error ?? 'אירעה שגיאה' }
+    }
+    return { success: true }
+  } catch {
+    return { success: false, error: 'שגיאת חיבור לשרת' }
+  }
+}
+
+export async function resetPassword(
+  token: string,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch('/api/reset-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password }),
+    })
+    const data = await res.json()
+    if (!data.success) {
+      return { success: false, error: data.error ?? 'אירעה שגיאה' }
+    }
+    return { success: true }
+  } catch {
+    return { success: false, error: 'שגיאת חיבור לשרת' }
+  }
+}
+
+export async function changePassword(
+  email: string,
+  password: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch('/api/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const data = await res.json()
+    if (!data.success) {
+      return { success: false, error: data.error ?? 'אירעה שגיאה' }
+    }
+    return { success: true }
+  } catch {
+    return { success: false, error: 'שגיאת חיבור לשרת' }
+  }
 }
 
 export function logout() {

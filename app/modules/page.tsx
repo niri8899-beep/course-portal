@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import AppLayout from '@/components/AppLayout'
 import { getCurrentUser } from '@/lib/auth'
-import { modulePercent } from '@/lib/progress'
+import { modulePercent, fetchCompleted } from '@/lib/progress'
 import { courseData } from '@/lib/courseData'
 
 export default function ModulesPage() {
@@ -14,9 +14,11 @@ export default function ModulesPage() {
   useEffect(() => {
     const u = getCurrentUser()
     if (u) {
-      const map: Record<number, number> = {}
-      courseData.modules.forEach(m => { map[m.id] = modulePercent(u, m.id, m.lessons.length) })
-      setModPct(map)
+      fetchCompleted(u).then(set => {
+        const map: Record<number, number> = {}
+        courseData.modules.forEach(m => { map[m.id] = modulePercent(set, m.id, m.lessons.length) })
+        setModPct(map)
+      })
     }
     const t = setTimeout(() => setReady(true), 80)
     return () => clearTimeout(t)
