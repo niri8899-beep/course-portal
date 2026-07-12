@@ -2,6 +2,11 @@ import { sql } from '@/lib/db'
 
 const CARDCOM_API = 'https://secure.cardcom.solutions/api/v11'
 
+// Make.com scenario "רכישת קורס דיגיטלי" — creates a monday.com item so
+// Nirit can track who purchased the course.
+const PURCHASE_NOTIFY_WEBHOOK_URL =
+  'https://hook.eu1.make.com/5bovne6msqwkyvgyto6mrw3ysmk1wou1'
+
 export const COURSE_PRICE = 79
 export const COURSE_NAME = 'קורס דיגיטלי - אנגלית בקלות'
 
@@ -110,6 +115,31 @@ async function getLpResult(lowProfileId: string): Promise<any | null> {
   }
 }
 
+// Best-effort notification to Make.com when a purchase is confirmed paid.
+// Never throws — a notification failure must not affect account activation.
+async function notifyPurchase(args: {
+  name: string
+  email: string
+  phone: string
+}): Promise<void> {
+  try {
+    await fetch(PURCHASE_NOTIFY_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name: args.name,
+        email: args.email,
+        phone: args.phone,
+        timestamp: new Date()
+          .toLocaleString('sv-SE', { timeZone: 'Asia/Jerusalem' })
+          .replace('T', ' '),
+      }),
+    })
+  } catch (err) {
+    console.error('purchase notify webhook failed', err)
+  }
+}
+
 type ActivateResult =
   | { ok: true; email: string }
   | { ok: false; error: string }
@@ -121,7 +151,7 @@ export async function verifyAndActivate(
   lowProfileId: string
 ): Promise<ActivateResult> {
   const rows = await sql`
-    SELECT email, status FROM purchases WHERE low_profile_id = ${lowProfileId}
+    SELECT email, status, name, phone FROM purchases WHERE low_profile_id = ${lowProfileId}
   `
   if (rows.length === 0) {
     return { ok: false, error: 'רכישה לא נמצאה' }
@@ -145,6 +175,12 @@ export async function verifyAndActivate(
   await sql`
     UPDATE users SET status = 'active' WHERE email = ${email}
   `
+
+  await notifyPurchase({
+    name: rows[0].name || email,
+    email,
+    phone: rows[0].phone || '',
+  })
 
   return { ok: true, email }
 }

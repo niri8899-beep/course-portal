@@ -54,6 +54,11 @@ await sql`
   )
 `
 
+// Captured from the course-sales landing form and carried through checkout,
+// so a paid purchase can be reported (name/phone) to the monday.com tracker.
+await sql`ALTER TABLE purchases ADD COLUMN IF NOT EXISTS name TEXT`
+await sql`ALTER TABLE purchases ADD COLUMN IF NOT EXISTS phone TEXT`
+
 const tables = await sql`
   SELECT table_name FROM information_schema.tables
   WHERE table_schema = 'public' ORDER BY table_name

@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password } = await req.json()
+    const { email, password, name, phone } = await req.json()
     if (!email || !password) {
       return NextResponse.json({ success: false, error: 'חסרים פרטים' }, { status: 400 })
     }
@@ -54,8 +54,8 @@ export async function POST(req: NextRequest) {
     }
 
     await sql`
-      INSERT INTO purchases (low_profile_id, email, amount, status)
-      VALUES (${page.lowProfileId}, ${norm}, 79, 'created')
+      INSERT INTO purchases (low_profile_id, email, amount, status, name, phone)
+      VALUES (${page.lowProfileId}, ${norm}, 79, 'created', ${name || null}, ${phone || null})
       ON CONFLICT (low_profile_id) DO NOTHING
     `
 

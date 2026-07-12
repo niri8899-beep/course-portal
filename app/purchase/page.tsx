@@ -9,6 +9,8 @@ function PurchaseForm() {
 
   const [email, setEmail]               = useState('')
   const [emailLocked, setEmailLocked]   = useState(false)
+  const [name, setName]                 = useState('')
+  const [phone, setPhone]               = useState('')
   const [password, setPassword]         = useState('')
   const [confirm, setConfirm]           = useState('')
   const [showPassword, setShowPassword] = useState(false)
@@ -23,6 +25,8 @@ function PurchaseForm() {
       setEmail(qpEmail.toLowerCase().trim())
       setEmailLocked(true)
     }
+    setName(params.get('name')?.trim() ?? '')
+    setPhone(params.get('phone')?.trim() ?? '')
     if (params.get('failed')) {
       setError('התשלום לא הושלם. אפשר לנסות שוב.')
     }
@@ -53,7 +57,7 @@ function PurchaseForm() {
       const res = await fetch('/api/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: normEmail, password }),
+        body: JSON.stringify({ email: normEmail, password, name, phone }),
       })
       const data = await res.json()
       if (!data.success || !data.paymentUrl) {
